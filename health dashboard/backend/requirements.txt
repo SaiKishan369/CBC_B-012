@@ -1,0 +1,46 @@
+# Core Django
+Django>=4.2.0
+djangorestframework>=3.14.0
+django-cors-headers>=4.2.0
+django-filter>=23.1
+django-storages>=1.13.2
+
+# Data Processing
+pandas>=2.0.0
+numpy>=1.24.3
+python-dateutil>=2.8.2
+pytz>=2023.3
+openpyxl>=3.1.2  # For Excel file support
+xlrd>=2.0.1  # For older Excel files
+
+# File Processing
+python-magic>=0.4.27
+python-magic-bin>=0.4.14; sys_platform == 'win32'  # Windows specific
+
+# AWS (for production file storage)
+boto3>=1.26.0
+
+# API Documentation
+drf-yasg>=1.21.5  # For Swagger/OpenAPI documentation
+django-rest-swagger>=2.2.0
+
+# Development & Testing
+pytest>=7.3.1
+pytest-django>=4.5.2
+factory-boy>=3.2.1
+Faker>=18.4.0
+
+# Authentication
+djangorestframework-simplejwt>=5.2.2
+dj-rest-auth>=3.0.0
+django-allauth>=0.54.0
+
+# Utilities
+python-dotenv>=1.0.0
+gunicorn>=20.1.0
+whitenoise>=6.4.0
+psycopg2-binary>=2.9.5  # PostgreSQL adapter
+
+# Security
+django-environ>=0.10.0
+django-cors-headers>=4.2.0
