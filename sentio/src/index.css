@@ -1,0 +1,102 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 260 60% 99%;
+    --foreground: 240 10% 3.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+
+    --primary: 255 76% 75%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 260 77% 96%;
+    --secondary-foreground: 255 20% 40%;
+
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+
+    --accent: 255 90% 95%;
+    --accent-foreground: 240 6% 10%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 255 76% 75%;
+
+    --radius: 0.75rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-sentio-gray/50;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-sentio-purple/50 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-sentio-purple/70;
+  }
+}
+
+@layer components {
+  .sentio-card {
+    @apply bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-sentio-gray/30;
+  }
+
+  .sentio-button {
+    @apply px-6 py-3 rounded-lg font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-sentio-purple/50 focus:ring-offset-2;
+  }
+
+  .sentio-button-primary {
+    @apply sentio-button bg-sentio-purple hover:bg-sentio-dark-purple text-white;
+  }
+
+  .sentio-button-secondary {
+    @apply sentio-button bg-sentio-light-purple hover:bg-sentio-purple/20 text-sentio-dark-purple;
+  }
+
+  .sentio-button-ghost {
+    @apply sentio-button bg-transparent hover:bg-sentio-gray text-sentio-dark-purple;
+  }
+  
+  .sentio-input {
+    @apply w-full px-4 py-3 rounded-lg border border-sentio-gray/50 focus:border-sentio-purple focus:ring-1 focus:ring-sentio-purple/30 focus:outline-none;
+  }
+
+  .sentio-container {
+    @apply container mx-auto px-4 md:px-6 lg:px-8;
+  }
+  
+  .sentio-section {
+    @apply py-12 md:py-20;
+  }
+
+  .sentio-gradient-text {
+    @apply bg-gradient-to-r from-sentio-dark-purple via-sentio-purple to-sentio-dark-purple bg-clip-text text-transparent;
+  }
+}
