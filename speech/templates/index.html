@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Speech Emotion Recognition</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+        .recording {
+            background-color: #fcf8e3;
+            color: #8a6d3b;
+        }
+        .server-status {
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .server-online {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .server-offline {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Speech Emotion Recognition</h1>
+        
+        <div id="serverStatus" class="server-status">
+            Checking server status...
+        </div>
+
+        <div class="section">
+            <h2>Record Audio</h2>
+            <button id="startRecording" class="button">Start Recording</button>
+            <button id="stopRecording" class="button" disabled>Stop Recording</button>
+            <button id="analyzeRecording" class="button" disabled>Analyze Recording</button>
+            <div id="recordingStatus" class="result"></div>
+        </div>
+
+        <div class="section">
+            <h2>Upload Audio File</h2>
+            <p>Supported formats: WAV, MP3, WebM, OGG, M4A, FLAC</p>
+            <input type="file" id="audioFile" accept=".wav,.mp3,.webm,.ogg,.m4a,.flac">
+            <button id="analyzeFile" class="button">Analyze Uploaded File</button>
+            <div id="uploadStatus" class="result"></div>
+        </div>
+
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+        let recordedAudio = null;
+
+        // Check server status
+        function checkServerStatus() {
+            fetch('/')
+                .then(response => {
+                    if (response.ok) {
+                        document.getElementById('serverStatus').className = 'server-status server-online';
+                        document.getElementById('serverStatus').textContent = 'Server is online';
+                    } else {
+                        document.getElementById('serverStatus').className = 'server-status server-offline';
+                        document.getElementById('serverStatus').textContent = 'Server is offline';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('serverStatus').className = 'server-status server-offline';
+                    document.getElementById('serverStatus').textContent = 'Server is offline';
+                });
+        }
+
+        // Check server status on page load
+        checkServerStatus();
+
+        // Start recording
+        document.getElementById('startRecording').addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        channelCount: 1,
+                        sampleRate: 44100,
+                        sampleSize: 16
+                    } 
+                });
+                
+                // Check for supported MIME types
+                const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
+                    ? 'audio/webm;codecs=opus'
+                    : 'audio/webm';
+                    
+                mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: mimeType,
+                    audioBitsPerSecond: 128000
+                });
+                
+                audioChunks = [];
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+                
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: mimeType });
+                    recordedAudio = audioBlob;
+                    document.getElementById('analyzeRecording').disabled = false;
+                    document.getElementById('recordingStatus').className = 'result recording';
+                    document.getElementById('recordingStatus').textContent = 'Recording completed. Click "Analyze Recording" to process.';
+                };
+                
+                mediaRecorder.start(1000); // Collect data every second
+                isRecording = true;
+                document.getElementById('startRecording').disabled = true;
+                document.getElementById('stopRecording').disabled = false;
+                document.getElementById('recordingStatus').className = 'result recording';
+                document.getElementById('recordingStatus').textContent = 'Recording...';
+            } catch (error) {
+                console.error('Error accessing microphone:', error);
+                document.getElementById('recordingStatus').className = 'result error';
+                document.getElementById('recordingStatus').textContent = 'Error accessing microphone. Please ensure microphone permissions are granted.';
+            }
+        });
+
+        // Stop recording
+        document.getElementById('stopRecording').addEventListener('click', () => {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                document.getElementById('startRecording').disabled = false;
+                document.getElementById('stopRecording').disabled = true;
+                
+                // Stop all audio tracks
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            }
+        });
+
+        // Analyze recorded audio
+        document.getElementById('analyzeRecording').addEventListener('click', async () => {
+            if (!recordedAudio) {
+                document.getElementById('result').className = 'result error';
+                document.getElementById('result').textContent = 'No recording available. Please record audio first.';
+                return;
+            }
+
+            const formData = new FormData();
+            const reader = new FileReader();
+            
+            reader.onload = async () => {
+                try {
+                    // Get the base64 data without the data URL prefix
+                    const base64Data = reader.result.split(',')[1];
+                    
+                    // Create a new FormData object
+                    const formData = new FormData();
+                    formData.append('audio_data', base64Data);
+                    
+                    document.getElementById('result').className = 'result';
+                    document.getElementById('result').textContent = 'Processing...';
+                    
+                    const response = await fetch('/predict', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        document.getElementById('result').className = 'result success';
+                        document.getElementById('result').textContent = 
+                            `Predicted Emotion: ${data.emotion_name}\nConfidence: ${(data.confidence * 100).toFixed(2)}%`;
+                    } else {
+                        document.getElementById('result').className = 'result error';
+                        document.getElementById('result').textContent = `Error: ${data.error}`;
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    document.getElementById('result').className = 'result error';
+                    document.getElementById('result').textContent = 'Error processing audio. Please try again.';
+                }
+            };
+            
+            reader.onerror = () => {
+                document.getElementById('result').className = 'result error';
+                document.getElementById('result').textContent = 'Error reading audio data. Please try recording again.';
+            };
+            
+            reader.readAsDataURL(recordedAudio);
+        });
+
+        // Analyze uploaded file
+        document.getElementById('analyzeFile').addEventListener('click', async () => {
+            const fileInput = document.getElementById('audioFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                document.getElementById('uploadStatus').className = 'result error';
+                document.getElementById('uploadStatus').textContent = 'Please select a file first.';
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('audio', file);
+            
+            try {
+                document.getElementById('uploadStatus').className = 'result';
+                document.getElementById('uploadStatus').textContent = 'Processing...';
+                
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('uploadStatus').className = 'result success';
+                    document.getElementById('uploadStatus').textContent = 
+                        `Predicted Emotion: ${data.emotion_name}\nConfidence: ${(data.confidence * 100).toFixed(2)}%`;
+                } else {
+                    document.getElementById('uploadStatus').className = 'result error';
+                    document.getElementById('uploadStatus').textContent = `Error: ${data.error}`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('uploadStatus').className = 'result error';
+                document.getElementById('uploadStatus').textContent = 'Error processing file. Please try again.';
+            }
+        });
+    </script>
+</body>
+</html> 
